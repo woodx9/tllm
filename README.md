@@ -1,7 +1,12 @@
-This is tllm Draft
+### This is tllm Draft
 
+### download gpt2 model
 
-how to run 
+[huggging face link](https://huggingface.co/openai-community/gpt2/tree/main)
+
+download pytorch_model.bin, put it under gpt2_model_infer/model/, and rename it to "gpt2_pytorch_model.bin"
+
+### how to run 
 ```javascript
 conda create --name tllm python=3.10
 

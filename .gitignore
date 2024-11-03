@@ -1,0 +1,3 @@
+__pycache__/
+gpt2_model_infer/chapter5_device_parallelism
+gpt2_model_infer/model/gpt2_pytorch_model.bin

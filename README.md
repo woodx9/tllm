@@ -1,4 +1,6 @@
-### This is tllm Draft
+## This is tllm Draft: A Journey to set up your own llm server
+
+you will learn about llm infer, kv cache, static batch and continuous batch... in this journery
 
 ### download gpt2 model
 

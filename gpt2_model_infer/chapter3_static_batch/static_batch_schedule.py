@@ -5,6 +5,7 @@ from torch.nn.utils.rnn import pad_sequence
 import torch
 import numpy as np
 from utils import add_new_input_ids
+from logger import logger, LogLevel
 
 
 class StaticBatchSchedule:
@@ -29,12 +30,12 @@ class StaticBatchSchedule:
         result = []
 
         for batch in batches:
-            print('batch', batch)
+            logger.info('batch', batch)
             batch_result = self.process_batch(batch)
             result.extend(batch_result)
 
         # 过滤掉所有的stop word
-        print('stop words', self.stop_words_token)
+        logger.info('stop words', self.stop_words_token)
 
         return result
     
@@ -48,8 +49,8 @@ class StaticBatchSchedule:
 
         input_ids = encodeBatch['input_ids']
         attention_mask = encodeBatch['attention_mask']
-        print('input_ids:', input_ids)
-        print('attention_mask', attention_mask)
+        logger.info('input_ids:', input_ids)
+        logger.info('attention_mask', attention_mask)
 
         
         new_input_ids, kv = self.prefillModel(input_ids, attention_mask)
@@ -69,7 +70,7 @@ class StaticBatchSchedule:
                         stop_decode_num += 1
                         break
             if (stop_decode_num == self.batch_size):
-                print('stop decode')
+                logger.info('stop decode')
                 break
 
         # 过滤掉所有的stop word之后的内容

@@ -5,6 +5,7 @@ from torch.nn.utils.rnn import pad_sequence
 import torch
 import numpy as np
 from utils import add_new_input_ids
+from logger import logger, LogLevel
 
 
 class ContinuousBatchSchedule:
@@ -46,9 +47,9 @@ class ContinuousBatchSchedule:
         padding_len = seq_len - input_ids.size(1)
 
 
-        print('seq_len:', seq_len)
-        print('input_ids.size(1):', input_ids.size(1))
-        print('padding_len:', padding_len)
+        logger.info('seq_len:', seq_len)
+        logger.info('input_ids.size(1):', input_ids.size(1))
+        logger.info('padding_len:', padding_len)
 
         input_id_padding = torch.full((input_ids.size(0), padding_len), self.tokenizer.pad_token_id)
         input_ids = torch.cat((input_ids, input_id_padding), dim=-1)
@@ -57,7 +58,7 @@ class ContinuousBatchSchedule:
         attention_mask_padding = torch.full((attention_mask.size(0), padding_len), 0)
         attention_mask = torch.cat((attention_mask, attention_mask_padding), dim=-1)
 
-        print('input_ids:', input_ids.shape)
+        logger.info('input_ids:', input_ids.shape)
 
 
         return input_ids, attention_mask
@@ -89,8 +90,8 @@ class ContinuousBatchSchedule:
 
         new_kv = [(torch.cat((kv_item[0], key_padding), dim=1), torch.cat((kv_item[1], value_padding), dim=1)) for kv_item in kv]
 
-        print('padding_len: ', padding_len)
-        print('kv_cache_AddPadding: ', new_kv[0][0].shape)
+        logger.info('padding_len: ', padding_len)
+        logger.info('kv_cache_AddPadding: ', new_kv[0][0].shape)
         
         return new_kv
 
@@ -136,8 +137,8 @@ class ContinuousBatchSchedule:
                 if new_id in self.stop_words_token or mask.sum() > self.max_docode_token_num
             ]
 
-            print('stop decode indexs', stop_decode_indexs)
-            print('input_ids', input_ids)
+            logger.info('stop decode indexs', stop_decode_indexs)
+            logger.info('input_ids', input_ids)
 
             # 终止decode
             # 存好结果，从input_ids， mask attention，kv cache中删除
@@ -160,27 +161,27 @@ class ContinuousBatchSchedule:
             if len(left_prompts) > 0  and len(stop_decode_indexs) > 0:
                 need_prefill_number = len(stop_decode_indexs)
                 
-                print('need prefill number:', need_prefill_number)
-                print('seq_len:', seq_len)
+                logger.info('need prefill number:', need_prefill_number)
+                logger.info('seq_len:', seq_len)
                 seq_len = 0
                 if input_ids.size(0) > 0:
-                    print('input_ids when caculate seq_len: ', input_ids)
-                    print('mask attention when caculate seq_len: ', attention_mask)
+                    logger.info('input_ids when caculate seq_len: ', input_ids)
+                    logger.info('mask attention when caculate seq_len: ', attention_mask)
 
                     sum_over_batches = attention_mask.sum(dim=1)
-                    print('sum_over_batches: ', sum_over_batches)
+                    logger.info('sum_over_batches: ', sum_over_batches)
                     seq_len = sum_over_batches.max()
 
 
                 prefill_input_ids, prefill_attention_mask = self.encodePrompts(left_prompts[:need_prefill_number])
 
-                print('input.ids.size(1)', input_ids.size(1))
-                print('input_ids  xxx', input_ids)
+                logger.info('input.ids.size(1)', input_ids.size(1))
+                logger.info('input_ids  xxx', input_ids)
 
 
                 # 这里需要进行裁剪input_ids，attention_mask和kv cache
                 if (seq_len  < input_ids.size(1)):
-                    print('开始裁减')
+                    logger.info('开始裁减')
 
                     reduced_sentence_length = input_ids.size(1) - seq_len
 
@@ -194,10 +195,10 @@ class ContinuousBatchSchedule:
                 
 
                 if (seq_len  > prefill_input_ids.size(1)):
-                    print('if happen')
+                    logger.info('if happen')
                     
                     prefill_input_ids, prefill_attention_mask = self.encodePromptsWihSeqLen(left_prompts[:need_prefill_number], seq_len - 1)
-                    print('prefill_input_ids:', prefill_input_ids.shape)
+                    logger.info('prefill_input_ids:', prefill_input_ids.shape)
 
 
                     left_prompts = left_prompts[need_prefill_number:]
@@ -208,9 +209,9 @@ class ContinuousBatchSchedule:
                     
 
                     # 需要考虑input_ids，attention_mask和kv cache的seq_len缩减和扩展
-                    print('seq_len:', seq_len)
-                    print('input_ids: ', input_ids.shape)
-                    print('new_input_ids: ', new_input_ids.shape)
+                    logger.info('seq_len:', seq_len)
+                    logger.info('input_ids: ', input_ids.shape)
+                    logger.info('new_input_ids: ', new_input_ids.shape)
 
                     input_ids = torch.cat((input_ids, new_input_ids), dim=0)
                     attention_mask = torch.cat((attention_mask, new_attention_mask), dim=0)
@@ -220,7 +221,7 @@ class ContinuousBatchSchedule:
                         torch.cat((old_kv[1], new_kv[1]), dim=0))
                         for old_kv, new_kv in zip(kv, new_prefill_kv)]
                 else :
-                    print('else happen')
+                    logger.info('else happen')
                     # prefill_input_ids, prefill_attention_mask = self.encodePrompts(left_prompts[:need_prefill_number])
                     # 上面已经执行过了
 
@@ -230,9 +231,9 @@ class ContinuousBatchSchedule:
 
                     left_prompts = left_prompts[need_prefill_number:]
 
-                    print('seq_len:', seq_len)
-                    print('input_ids: ', input_ids)
-                    print('new_input_ids:', new_input_ids)
+                    logger.info('seq_len:', seq_len)
+                    logger.info('input_ids: ', input_ids)
+                    logger.info('new_input_ids:', new_input_ids)
 
                     if seq_len != 0:
                         # 这里要考虑input_ids，attention_mask和kv cache的seq_len的增加，长度达到new prefill seq_len的距离

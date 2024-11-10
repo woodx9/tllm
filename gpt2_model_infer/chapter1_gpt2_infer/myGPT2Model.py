@@ -3,6 +3,7 @@ import torch
 from torch import nn
 from transformers.activations import gelu_new
 from transformers import GPT2Config
+from logger import logger, LogLevel
 
 
 
@@ -40,16 +41,16 @@ class MyGPT2Model(nn.Module):
         self.ln_f.weight =  nn.Parameter(self.modelParameters['ln_f.weight'])
         self.ln_f.bias =  nn.Parameter(self.modelParameters['ln_f.bias'])
 
-        # print('wte', self.wte.weight)
-        # print('wpe', self.wpe.weight)
+        # logger.info('wte', self.wte.weight)
+        # logger.info('wpe', self.wpe.weight)
 
 
     def forward(self, input_ids: torch.Tensor):
-        print("MyGPT2Model forward: ")
+        logger.info("MyGPT2Model forward: ")
         
         position_ids = torch.arange(0, input_ids.size(1), dtype=torch.long, device='cpu')
-        print('input_ids:', input_ids)
-        print('position_ids: ', position_ids)
+        logger.info('input_ids:', input_ids)
+        logger.info('position_ids: ', position_ids)
 
         # 获取token对应的embedding
         inputs_embeds = self.wte(input_ids)
@@ -73,7 +74,7 @@ class MyGPT2Model(nn.Module):
         probabilities = torch.softmax(last_token_logits, dim=-1)
 
         max_prob_index = torch.argmax(probabilities, dim=-1)
-        print('probabilities_np', max_prob_index)
+        logger.info('probabilities_np', max_prob_index)
         
         return max_prob_index
 
@@ -107,14 +108,14 @@ class MyGPT2Block(nn.Module):
         self.ln_2.weight = nn.Parameter(self.modelParameters[f'{ln_2_ParaName}.weight'])
         self.ln_2.bias = nn.Parameter(self.modelParameters[f'{ln_2_ParaName}.bias'])
 
-        # print(ln_1_ParaName, self.ln_1.weight)
-        # print(ln_1_ParaName, self.ln_1.bias)
-        # print(ln_2_ParaName, self.ln_2.weight)
-        # print(ln_2_ParaName, self.ln_2.bias)
+        # logger.info(ln_1_ParaName, self.ln_1.weight)
+        # logger.info(ln_1_ParaName, self.ln_1.bias)
+        # logger.info(ln_2_ParaName, self.ln_2.weight)
+        # logger.info(ln_2_ParaName, self.ln_2.bias)
 
 
     def forward(self, hidden_states):
-        print("MyGPT2Block forward: ")
+        logger.info("MyGPT2Block forward: ")
         residual = hidden_states
         hidden_states = self.ln_1(hidden_states)
         attn_out = self.attn(hidden_states)
@@ -160,16 +161,16 @@ class MyGPT2Attention(nn.Module):
         self.c_proj.weight = nn.Parameter(self.modelParameters[f'{c_proj_ParaName}.weight'].T)
         self.c_proj.bias = nn.Parameter(self.modelParameters[f'{c_proj_ParaName}.bias'])
 
-        # print(attn_bias_ParaName, self.attn.bias)
-        # print(c_attn_ParaName, self.c_attn.weight)
-        # print(c_attn_ParaName, self.c_attn.bias)
-        # print(c_proj_ParaName, self.c_proj.weight)
-        # print(c_proj_ParaName, self.c_proj.bias)
+        # logger.info(attn_bias_ParaName, self.attn.bias)
+        # logger.info(c_attn_ParaName, self.c_attn.weight)
+        # logger.info(c_attn_ParaName, self.c_attn.bias)
+        # logger.info(c_proj_ParaName, self.c_proj.weight)
+        # logger.info(c_proj_ParaName, self.c_proj.bias)
 
 
 
     def forward(self, hidden_states):
-        print("MyGPT2Attention forward: ")
+        logger.info("MyGPT2Attention forward: ")
 
         batch_size, seq_len, embed_dim = hidden_states.size()
         
@@ -210,9 +211,9 @@ class MyGPT2Attention(nn.Module):
         # 扩展为多个批次
         batch_mask = mask.unsqueeze(0).expand(batch_size, self.num_heads, -1, -1)
         # 在这里查看哪些值被mask了
-        # print('scores before mask: ', scores)
+        # logger.info('scores before mask: ', scores)
         scores = scores.masked_fill(batch_mask == 0, -1e9)
-        # print('scores after mask: ', scores)
+        # logger.info('scores after mask: ', scores)
         
         # 计算注意力权重
         # scores: [batch_size, num_heads, seq_len, seq_len]
@@ -270,10 +271,10 @@ class MyGPT2MLP(nn.Module):
         self.c_proj.weight = nn.Parameter(self.modelParameters[f'{c_proj_ParaName}.weight'].T)
         self.c_proj.bias = nn.Parameter(self.modelParameters[f'{c_proj_ParaName}.bias'])
 
-        # print(c_fc_ParaName, self.c_fc.weight)
-        # print(c_fc_ParaName, self.c_fc.bias)
-        # print(c_proj_ParaName, self.c_proj.weight)
-        # print(c_proj_ParaName, self.c_proj.bias)
+        # logger.info(c_fc_ParaName, self.c_fc.weight)
+        # logger.info(c_fc_ParaName, self.c_fc.bias)
+        # logger.info(c_proj_ParaName, self.c_proj.weight)
+        # logger.info(c_proj_ParaName, self.c_proj.bias)
 
 
     def forward(self, hidden_states) -> torch.FloatTensor:
@@ -285,5 +286,6 @@ class MyGPT2MLP(nn.Module):
         return hidden_states
     
 
+    
 
 

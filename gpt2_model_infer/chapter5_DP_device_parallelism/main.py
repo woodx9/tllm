@@ -5,6 +5,9 @@ from prefillModel import PrefillModel
 import numpy as np
 import torch
 
+
+# source from chapter2
+
 from utils import get_device
 
 def main():
@@ -13,7 +16,9 @@ def main():
 
     print(input_ids)
 
+    # device1 for tensor not in self attention
     device1 = 'cpu'
+    # device2 for tensor in self attention
     device2 = get_device()
     
 

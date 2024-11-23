@@ -27,13 +27,13 @@ class PrefillModel(nn.Module):
         modelParametersDevice2  = torch.load(GPT2_PYTORCH_BIN_PATH, map_location=torch.device(self.device2), weights_only=True)
 
         self.embed_dim = self.config.n_embd
-        self.wte = nn.Embedding(self.config.vocab_size, self.embed_dim)
-        self.wpe = nn.Embedding(self.config.max_position_embeddings, self.embed_dim)
+        self.wte = nn.Embedding(self.config.vocab_size, self.embed_dim, device=self.device1)
+        self.wpe = nn.Embedding(self.config.max_position_embeddings, self.embed_dim, device=self.device1)
 
         self.h = nn.ModuleList([PrefillGPT2Block(self.config, modelParametersDevice2, device=self.device2, layer_idx=i) for i in range(self.config.num_hidden_layers)])
 
-        self.ln_f = nn.LayerNorm(self.embed_dim, eps=self.config.layer_norm_epsilon)
-        self.lm_head = nn.Linear(self.config.n_embd, self.config.vocab_size, bias=False)
+        self.ln_f = nn.LayerNorm(self.embed_dim, eps=self.config.layer_norm_epsilon, device=self.device1)
+        self.lm_head = nn.Linear(self.config.n_embd, self.config.vocab_size, bias=False, device=self.device1)
 
         
 
@@ -109,10 +109,13 @@ class PrefillGPT2Block(nn.Module):
         hidden_size = config.n_embd
         inner_dim = config.n_inner if config.n_inner is not None else 4 * hidden_size
 
-        self.ln_1 = nn.LayerNorm(hidden_size, eps=config.layer_norm_epsilon)
+        self.ln_1 = nn.LayerNorm(hidden_size, eps=config.layer_norm_epsilon, device=self.device)
         self.layer_idx = layer_idx
+        
         self.attn = PrefillGPT2Attention(config, modelParameters, device=device, layer_idx=layer_idx)
-        self.ln_2 = nn.LayerNorm(hidden_size, eps=config.layer_norm_epsilon)
+        
+        self.ln_2 = nn.LayerNorm(hidden_size, eps=config.layer_norm_epsilon, device=self.device)
+
         self.mlp = MyGPT2MLP(inner_dim, config, layer_idx, modelParameters, device=device)
 
         self.load_model_parameters()
@@ -234,10 +237,10 @@ class PrefillGPT2Attention(nn.Module):
         scores = scores + bias
 
         # 获取下三角掩码
-        mask = torch.tril(torch.ones(seq_len, seq_len))
+        mask = torch.tril(torch.ones(seq_len, seq_len, device=self.device))
 
         # 扩展为多个批次
-        batch_mask = mask.unsqueeze(0).expand(batch_size, self.num_heads, -1, -1).to(self.device)
+        batch_mask = mask.unsqueeze(0).expand(batch_size, self.num_heads, -1, -1)
         scores = scores.masked_fill(batch_mask == 0, -1e9)
         
         # 计算注意力权重

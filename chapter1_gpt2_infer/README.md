@@ -20,13 +20,23 @@
 
 ##### 输出
 
+在上图可以注意到，在经过`transformer Decoder`后，[n x 768]的`hidden_states`只获取了最后一维。`hidden_states`形状变成了[1 x 768]。 这是因为最后一维的`hidden_states`已经包含整个`prompt`的所有信息了。原因后续会详细介绍。[1 x 768]`hidden_states`与`lm_head`矩阵相乘，最终获取下一个token在词表中的分布概率。值得一提的是，这里的`lm_head`和上文中的`WTE`是共享参数的，与llama架构有区别。
 
 
+#### Transformer Decoder
 
-#### Transformer Deocder
+`Transformer Decoder`里有两大组成部分，`self attention`和`mlp`。mlp里都是一些矩阵相乘和激活函数，这里就先不说了。有兴趣的同学可以自行查阅。这里我们把目光方向`self attention`。
+
 ##### 单头注意力
 
+
+<!-- 待画图 -->
+<!-- 待补充 -->
+
 ##### 多头注意力
+
+<!-- 待画图 -->
+<!-- 待补充 -->
 
 
 ### 扩展
@@ -38,7 +48,7 @@
 
 1. 通过正则表达式将`prompt`拆分成一个个`token`
 2. `token` 映射成 `token id`
-3. 合并`token id数组`中可以合并的`token id`
+3. 根据BPE训练数据，合并`token id数组`中可以合并的`token id`
 4. 输出结果
 
 
